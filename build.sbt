@@ -1,6 +1,6 @@
 lazy val root = (project in file(".")).
   settings(
-    name := "raster-frames-template",
+    name := "raster-frames-project",
     organization := "io.astraea",
     test in Test := {
       val _ = (g8Test in Test).toTask("").value

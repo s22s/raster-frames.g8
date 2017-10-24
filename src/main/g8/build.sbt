@@ -23,6 +23,7 @@ import geotrellis.raster._
 import geotrellis.spark._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
+import geotrellis.raster.io.geotiff._
 implicit val spark = SparkSession.builder()
     .master("local[*]")
     .appName("RasterFrames")

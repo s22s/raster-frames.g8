@@ -3,7 +3,7 @@
 <img src="https://github.com/s22s/raster-frames/raw/develop/src/main/paradox/_template/images/RasterFramesLogo.png" width="300px"/><sup style="vertical-align: top;">&trade;</sup>
 
 
-This is a [Gitter8][g8] template for getting started with [RasterFrames][rf].
+This is a [Giter8][g8] template for getting started with [RasterFrames][rf].
 
 To use:
 
