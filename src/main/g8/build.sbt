@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   "io.astraea" %% "raster-frames" % "$rasterframes_version$",
   "org.locationtech.geotrellis" %% "geotrellis-raster" % "$geotrellis_version$",
   "org.locationtech.geotrellis" %% "geotrellis-spark" % "$geotrellis_version$",
-  "org.apache.spark" %% "spark-sql" % "$spark_version$"
+  "org.apache.spark" %% "spark-sql" % "$spark_version$",
+  "org.apache.spark" %% "spark-mllib" % "$spark_version$"
 )
 
 // This is just for testing the template, and can be removed

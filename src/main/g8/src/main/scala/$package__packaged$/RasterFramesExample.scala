@@ -3,9 +3,17 @@ package $package$
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.Tile
+import geotrellis.raster._
 import astraea.spark.rasterframes._
+import astraea.spark.rasterframes.ml._
+import geotrellis.raster.render._
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.feature.VectorAssembler
 
+/**
+ * A tour around some of the RasterFrame features.
+ */
 object RasterFramesExample extends App {
   implicit val spark = SparkSession.builder()
     .master("local[*]")
@@ -57,6 +65,54 @@ object RasterFramesExample extends App {
   val withOp = withAdjusted.withColumn("op", localSubtract(col("tile"), col("adjusted"))).asRF
   val raster2 = withOp.toRaster(col("op"), 774, 500)
   GeoTiff(raster2).write("with-op.tiff")
+
+  // Perform k-means clustering
+  val k = 4
+
+  // SparkML doesn't like NoData/NaN values, so we set the no-data value to something less offensive
+  val forML = rf.select(rf.spatialKeyColumn, withNoData(col("tile"), 99999) as "tile").asRF
+
+  // First we instantiate the transformer that converts tile rows into cell rows.
+  val exploder = new TileExploder()
+
+  // This transformer wraps the pixel values in a vector.
+  // Could use this with multiple bands
+  val assembler = new VectorAssembler().
+    setInputCols(Array("tile")).
+    setOutputCol("features")
+
+  // Or clustering algorithm
+  val kmeans = new KMeans().setK(k)
+
+  // Construct the ML pipeline
+  val pipeline = new Pipeline().setStages(Array(exploder, assembler, kmeans))
+
+  // Compute the model
+  val model = pipeline.fit(forML)
+
+  // Score the data
+  val clusteredCells = model.transform(forML)
+
+  clusteredCells.show()
+
+  // Reassembling the clustering results takes a number of steps.
+  val tlm = rf.tileLayerMetadata.left.get
+
+  // RasterFrames provides a special aggregation function for assembling tiles from cells with column/row indexes
+  val retiled = clusteredCells.groupBy(forML.spatialKeyColumn).agg(
+    assembleTile(col("column_index"), col("row_index"), col("prediction"), tlm.tileCols, tlm.tileRows, ByteConstantNoDataCellType)
+  )
+
+  val clusteredRF = retiled.asRF(col("spatial_key"), tlm)
+
+  val raster3 = clusteredRF.toRaster(col("prediction"), 774, 500)
+
+  val clusterColors = IndexedColorMap.fromColorMap(
+    ColorRamps.Viridis.toColorMap((0 until k).toArray)
+  )
+
+  GeoTiff(raster3).copy(options = GeoTiffOptions(clusterColors)).write("clustered.tiff")
+
 
   spark.stop()
 }
