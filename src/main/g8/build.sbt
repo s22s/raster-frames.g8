@@ -1,4 +1,4 @@
-name := "raster-frames-template"
+name := "$name$"
 
 organization := "$package$"
 
@@ -29,8 +29,8 @@ implicit val spark = SparkSession.builder()
     .master("local[*]")
     .appName("RasterFrames")
     .getOrCreate()
+    .withRasterFrames
 spark.sparkContext.setLogLevel("ERROR")
-rfInit(spark.sqlContext)
 import spark.implicits._
 """
 

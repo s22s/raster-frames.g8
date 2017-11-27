@@ -1,4 +1,4 @@
-*.class
 *.log
 target/
 .idea
+metastore_db/
